@@ -16,7 +16,7 @@ def download_from_twitch(void, file_name=None):
     messages = []
 
     cid = "isaxc3wjcarzh4vgvz11cslcthw0gw"
-    vod_info = requests.get("https://api.twitch.tv/kraken/videos/v" + void, headers={"Client-ID": cid}).json()
+    vod_info = requests.get("https://api.twitch.tv/kraken/videos/v" + void, headers={"Client-ID": cid, "Accept": "application/vnd.twitchtv.v5+json"}).json()
 
     if "error" in vod_info:
         sys.exit("got an error in vod info response: " + str(vod_info))
@@ -25,13 +25,13 @@ def download_from_twitch(void, file_name=None):
 
     response = None
 
-    print("downloading chat messages for vod " + sys.argv[1] + "...")
+    print("downloading chat messages for vod " + void + "...")
     while response == None or '_next' in response:
         query = ('cursor=' + response['_next']) if response != None and '_next' in response else 'content_offset_seconds=0'
         for i in range(0, CHUNK_ATTEMPTS):
             error = None
             try:
-                response = requests.get("https://api.twitch.tv/v5/videos/" + sys.argv[1] + "/comments?" + query, headers={"Client-ID": cid}).json()
+                response = requests.get("https://api.twitch.tv/v5/videos/" + void + "/comments?" + query, headers={"Client-ID": cid}).json()
             except requests.exceptions.ConnectionError as e:
                 error = str(e)
             else:
