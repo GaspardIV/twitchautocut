@@ -1,3 +1,3 @@
 import sys
-sys.path.append('.')
-rechat-dl.py '502136388' out.json
+from rechatdl import download_from_twitch
+download_from_twitch("506496104")
