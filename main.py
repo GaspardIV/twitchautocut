@@ -19,7 +19,7 @@ def preprocess(file_name):
                 m_created.append(datetime.datetime.strptime(message["created_at"], "%Y-%m-%dT%H:%M:%SZ"))
     start = min(m_created)
     end_of_stream = max(m_created)
-    stream_duration = int((end_of_stream - start).total_seconds())+2
+    stream_duration = int((end_of_stream - start).total_seconds()) + 2
     second_to_messages = {new_list: [] for new_list in range(stream_duration)}
 
     for i in range(len(m_created)):
@@ -28,9 +28,14 @@ def preprocess(file_name):
     return start, second_to_messages
 
 
+def get_statistics():
+    messages_count = sum(len(second_to_messages[i]) for i in second_to_messages)
+    duration = len(second_to_messages)
+    return duration, messages_count
+
+
 if __name__ == '__main__':
-    # download_info_and_messages_to_files()
-    start, second_to_messages = preprocess('506496104__messages.txt')
-    for i in second_to_messages:
-        print(i, second_to_messages[i])
-    print(len(second_to_messages))
+    # 506496104
+    vid_id = "523163459"
+    # download_info_and_messages_to_files(vid_id)
+    start, second_to_messages = preprocess(vid_id + '__messages.txt')
