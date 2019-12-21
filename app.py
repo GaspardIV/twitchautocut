@@ -1,19 +1,23 @@
 import pyglet
-# from pyglet.media import *
-# from pyglet.window import *
+from moviepy.editor import *
+pyglet.lib.load_library('avbin')
+pyglet.have_avbin=True
+
+
+video = VideoFileClip("Twitch.mp4")
+v1 = video.subclip(650,660)
+v2 = video.subclip(1650,1660)
+# result = CompositeVideoClip([video, txt_clip]) # Overlay text on video
+v2.write_videofile("out.mp4") # Many options...
+v1.write_videofile("out1.mp4") # Many options...
+
+vidPath = 'out.mp4'
 
 window = pyglet.window.Window()
-# label = pyglet.text.Label('Hello, world',
-#                           font_name='Times New Roman',
-#                           font_size=36,
-#                           x=window.width // 2, y=window.height // 2,
-#                           anchor_x='center', anchor_y='center')
-
-vidPath = 'Twitch.mp4'
 player = pyglet.media.Player()
 source = pyglet.media.StreamingSource()
 MediaLoad = pyglet.media.load(vidPath)
-
+# need ffmpeg codec http://blog.gregzaal.com/how-to-install-ffmpeg-on-windows/ and avbin on windows!!
 player.queue(MediaLoad)
 player.play()
 
