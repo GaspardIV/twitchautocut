@@ -34,8 +34,18 @@ def get_statistics():
     return duration, messages_count
 
 
+def convert_to_count(second_to_messages, pattern):
+    pattern = pattern.lower()
+    return {sec: sum(1 if pattern in m.lower() else 0 for m in second_to_messages[sec]) for sec in second_to_messages}
+
+
 if __name__ == '__main__':
     # 506496104
     vid_id = "523163459"
     # download_info_and_messages_to_files(vid_id)
     start, second_to_messages = preprocess(vid_id + '__messages.txt')
+    second_to_xdcount = convert_to_count(second_to_messages, "xd")
+    second_to_pogcount = convert_to_count(second_to_messages, "pogchamp")
+    print(second_to_messages)
+    print(second_to_xdcount)
+    print(second_to_pogcount)
