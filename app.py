@@ -1,6 +1,8 @@
 from moviepy.editor import *
 import cv2
 import pytesseract
+import numpy as np
+
 
 # video = VideoFileClip("Twitch.mp4")
 # v1 = video.subclip(745,761)
@@ -19,12 +21,13 @@ def frames(file, do_print=False):
         ret, frame = capture.read()
         if frame is not None:
             frame_num += 1
-            time_in_sec = frame_num/fps
+            time_in_sec = frame_num / fps
             if do_print:
                 print('{num}/{totalnum}'.format(num=frame_num, totalnum=total))
             yield frame, time_in_sec
         else:
             break
+
 
 def every_n_frame(file, n):
     i = 0
@@ -38,23 +41,30 @@ def every_n_frame(file, n):
 def get_score_from_frame(frame):
     height = len(frame)
     width = len(frame[0])
-    subimage = frame[5:25,width-370:width]
-    # cv2.rectangle(frame, (width-370, 5), (width, 25), (255, 255, 255), -1)
-    cv2.imshow('Frame', frame)
-    cv2.imshow('Frame2', subimage)
-    print(pytesseract.image_to_string(subimage))
+    # subimage = frame[5:25,width-370:width]
+    subimage = frame[0:30, width - 257:width - 155]
+    gray = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
+    _, th2 = cv2.threshold(gray, 63, 255, cv2.THRESH_BINARY_INV)
+    text = pytesseract.image_to_string(th2)
 
+    fgmask2 = fgbg2.apply(th2)
+    fgmask3 = fgbg3.apply(th2)
+    cv2.imshow("aa", fgmask2)
+    cv2.imshow("bb", fgmask3)
+    print(cv2.countNonZero(fgmask2), cv2.countNonZero(fgmask3),)
+    # todo findcountures i pojedynczo rozpoznowac z opcja single character moze???
+    if text.count("/") == 2:
+        kills, deads, assists = text.split("/")
+        if kills.isdigit() and deads.isdigit() and assists.isdigit():
+            return int(kills), int(deads), int(assists)
+    return None
 
+# creating object
+fgbg2 = cv2.createBackgroundSubtractorMOG2()
+fgbg3 = cv2.createBackgroundSubtractorKNN()
 
 for frame, frame_time in every_n_frame("out.mp4", 10):
-    # if frame_num < 5000:
-    #     continue
-
-
-    # cv2.putText(frame, str(frame_num), (15, 15),
-    #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
-
-    print(get_score_from_frame(frame))
+    get_score_from_frame(frame)
     key = cv2.waitKey(30)
 
 # vidPath = 'out.mp4'
