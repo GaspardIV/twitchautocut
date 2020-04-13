@@ -81,10 +81,11 @@ def get_score_from_frame(frame):
         letterimage = th2[rect[1]:rect[1]+rect[3], rect[0]:rect[0]+rect[2]]
         cv2.imshow(str(i), letterimage)
         i += 1
-        letter = pytesseract.image_to_string(letterimage, config=" --psm 10 -l osd")
-        print(letter, end=" ")
+        # letter = pytesseract.image_to_string(letterimage,lang='eng',  config="-c tessedit_char_whitelist=0123456789/ --psm 10 -l osd")
+        letter = pytesseract.image_to_string(letterimage, config="--psm 10 -l osd")
+        print(letter, end="")
 
-    print("%%%%%")
+    print("")
     # cv2.imshow("aa", subimage)
     # todo findcountures i pojedynczo rozpoznowac z opcja single character moze???
 
