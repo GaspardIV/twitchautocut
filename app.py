@@ -41,35 +41,27 @@ def every_n_frame(file, n):
 
 
 def get_score_from_frame(frame):
-    height = len(frame)
     width = len(frame[0])
-    # subimage = frame[5:25,width-370:width]
     subimage = frame[0:30, width - 257:width - 155]
+
     gray = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
     _, th2 = cv2.threshold(gray, 63, 255, cv2.THRESH_BINARY_INV)
     contours, hierarchy = cv2.findContours(th2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     contours_poly = [None] * len(contours)
-    boundRect = [None] * len(contours)
-    centers = [None] * len(contours)
-    radius = [None] * len(contours)
+    boundRect = []
 
     for i, c in enumerate(contours):
         contours_poly[i] = cv2.approxPolyDP(c, 3, True)
-        boundRect[i] = cv2.boundingRect(contours_poly[i])
-        centers[i], radius[i] = cv2.minEnclosingCircle(contours_poly[i])
+        parent = hierarchy[0][i][3]
+        if parent != -1 and hierarchy[0][parent][3] == -1: #it has parent, but does not have a grandpa
+            boundRect.append(cv2.boundingRect(contours_poly[i]))
 
-    drawing = np.zeros((subimage.shape[0], subimage.shape[1], 3), dtype=np.uint8)
-
-    for i in range(len(contours)):
+    for i in range(len(boundRect)):
         color = (0, rng.randint(0, 256), rng.randint(0, 256))
-        cv2.drawContours(drawing, contours_poly, i, color)
-        cv2.rectangle(drawing, (int(boundRect[i][0]), int(boundRect[i][1])), (int(boundRect[i][0] + boundRect[i][2]), int(boundRect[i][1] + boundRect[i][3])), color, 2)
-        cv2.circle(drawing, (int(centers[i][0]), int(centers[i][1])), int(radius[i]), color, 2)
+        cv2.rectangle(subimage, (int(boundRect[i][0]), int(boundRect[i][1])), (int(boundRect[i][0] + boundRect[i][2]), int(boundRect[i][1] + boundRect[i][3])), color, 2)
 
-    cv2.imshow('Contours', drawing)
-
-    # cv2.drawContours(subimage, contours, -1, (0, 255, 0), 3)
+    cv2.imshow('aa', subimage)
     text = pytesseract.image_to_string(th2)
     # cv2.imshow("aa", subimage)
     # todo findcountures i pojedynczo rozpoznowac z opcja single character moze???
