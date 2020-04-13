@@ -2,6 +2,8 @@ from moviepy.editor import *
 import cv2
 import pytesseract
 import numpy as np
+import random as rng
+rng.seed(12345)
 
 
 # video = VideoFileClip("Twitch.mp4")
@@ -45,23 +47,38 @@ def get_score_from_frame(frame):
     subimage = frame[0:30, width - 257:width - 155]
     gray = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
     _, th2 = cv2.threshold(gray, 63, 255, cv2.THRESH_BINARY_INV)
-    text = pytesseract.image_to_string(th2)
+    contours, hierarchy = cv2.findContours(th2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    fgmask2 = fgbg2.apply(th2)
-    fgmask3 = fgbg3.apply(th2)
-    cv2.imshow("aa", fgmask2)
-    cv2.imshow("bb", fgmask3)
-    print(cv2.countNonZero(fgmask2), cv2.countNonZero(fgmask3),)
+    contours_poly = [None] * len(contours)
+    boundRect = [None] * len(contours)
+    centers = [None] * len(contours)
+    radius = [None] * len(contours)
+
+    for i, c in enumerate(contours):
+        contours_poly[i] = cv2.approxPolyDP(c, 3, True)
+        boundRect[i] = cv2.boundingRect(contours_poly[i])
+        centers[i], radius[i] = cv2.minEnclosingCircle(contours_poly[i])
+
+    drawing = np.zeros((subimage.shape[0], subimage.shape[1], 3), dtype=np.uint8)
+
+    for i in range(len(contours)):
+        color = (0, rng.randint(0, 256), rng.randint(0, 256))
+        cv2.drawContours(drawing, contours_poly, i, color)
+        cv2.rectangle(drawing, (int(boundRect[i][0]), int(boundRect[i][1])), (int(boundRect[i][0] + boundRect[i][2]), int(boundRect[i][1] + boundRect[i][3])), color, 2)
+        cv2.circle(drawing, (int(centers[i][0]), int(centers[i][1])), int(radius[i]), color, 2)
+
+    cv2.imshow('Contours', drawing)
+
+    # cv2.drawContours(subimage, contours, -1, (0, 255, 0), 3)
+    text = pytesseract.image_to_string(th2)
+    # cv2.imshow("aa", subimage)
     # todo findcountures i pojedynczo rozpoznowac z opcja single character moze???
+
     if text.count("/") == 2:
         kills, deads, assists = text.split("/")
         if kills.isdigit() and deads.isdigit() and assists.isdigit():
             return int(kills), int(deads), int(assists)
     return None
-
-# creating object
-fgbg2 = cv2.createBackgroundSubtractorMOG2()
-fgbg3 = cv2.createBackgroundSubtractorKNN()
 
 for frame, frame_time in every_n_frame("out.mp4", 10):
     get_score_from_frame(frame)
