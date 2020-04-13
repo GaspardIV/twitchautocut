@@ -3,6 +3,7 @@ import cv2
 import pytesseract
 import numpy as np
 import random as rng
+
 rng.seed(12345)
 
 
@@ -54,15 +55,36 @@ def get_score_from_frame(frame):
     for i, c in enumerate(contours):
         contours_poly[i] = cv2.approxPolyDP(c, 3, True)
         parent = hierarchy[0][i][3]
-        if parent != -1 and hierarchy[0][parent][3] == -1: #it has parent, but does not have a grandpa
+        if parent != -1 and hierarchy[0][parent][3] == -1:  # it has parent, but does not have a grandpa
             boundRect.append(cv2.boundingRect(contours_poly[i]))
 
+    boundRect = sorted(boundRect)
+
     for i in range(len(boundRect)):
-        color = (0, rng.randint(0, 256), rng.randint(0, 256))
-        cv2.rectangle(subimage, (int(boundRect[i][0]), int(boundRect[i][1])), (int(boundRect[i][0] + boundRect[i][2]), int(boundRect[i][1] + boundRect[i][3])), color, 2)
+        color = (0, 50 + i * 20, 0)
+        p1 = (int(boundRect[i][0]), int(boundRect[i][1]))
+        p2 = (int(boundRect[i][0] + boundRect[i][2]), int(boundRect[i][1] + boundRect[i][3]))
+        cv2.rectangle(subimage, p1, p2, color, 1)
+
+    for i in range(1, len(boundRect)): # check if y's are the same
+        if not abs(boundRect[i][1] - boundRect[i-1][1]) < 5 or not abs(boundRect[i][3] - boundRect[i-1][3]) < 5:
+            return None
+
 
     cv2.imshow('aa', subimage)
     text = pytesseract.image_to_string(th2)
+    print(text)
+    i = 0
+    for rect in boundRect:
+        # p1 = (int(boundRect[i][0]), int(boundRect[i][1]))
+        # p2 = (int(boundRect[i][0] + boundRect[i][2]), int(boundRect[i][1] + boundRect[i][3]))
+        letterimage = th2[rect[1]:rect[1]+rect[3], rect[0]:rect[0]+rect[2]]
+        cv2.imshow(str(i), letterimage)
+        i += 1
+        letter = pytesseract.image_to_string(letterimage, config=" --psm 10 -l osd")
+        print(letter, end=" ")
+
+    print("%%%%%")
     # cv2.imshow("aa", subimage)
     # todo findcountures i pojedynczo rozpoznowac z opcja single character moze???
 
@@ -71,6 +93,7 @@ def get_score_from_frame(frame):
         if kills.isdigit() and deads.isdigit() and assists.isdigit():
             return int(kills), int(deads), int(assists)
     return None
+
 
 for frame, frame_time in every_n_frame("out.mp4", 10):
     get_score_from_frame(frame)
