@@ -7,7 +7,22 @@ import random as rng
 rng.seed(12345)
 
 
+# 0, 1, 2, 7 -> out.mp4.
+# 3, 4, 9 -> 42;33
+# 5, 6 -> 2;14;30
+# 8 -> 2;18;30
+
 # video = VideoFileClip("Twitch.mp4")
+# v1 = video.subclip(42 * 60 + 30, 42 * 60 + 35)
+# v1.write_videofile("349.mp4")
+#
+# v1 = video.subclip(2 * 60 * 60 + 14 * 60 + 25, 2 * 60 * 60 + 14 * 60 + 30)
+# v1.write_videofile("56.mp4")
+#
+# v1 = video.subclip(2 * 60 * 60 + 18 * 60 + 25, 2 * 60 * 60 + 18 * 60 + 30)
+# v1.write_videofile("8.mp4")
+
+
 # v1 = video.subclip(745,761)
 # v2 = video.subclip(12352, 12368)
 # result = CompositeVideoClip([video, txt_clip]) # Overlay text on video
@@ -41,69 +56,66 @@ def every_n_frame(file, n):
         i %= n
 
 
-def get_score_from_frame(frame):
+def recognizedigit(src):
+    cdst = cv2.cvtColor(src, cv2.COLOR_GRAY2BGR)
+
+    cv2.imshow('linesDetected.jpg', cdst)
+    cv2.waitKey(3000)
+
+
+def get_score_area(frame):
     width = len(frame[0])
     subimage = frame[0:30, width - 257:width - 155]
-
     gray = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
-    _, th2 = cv2.threshold(gray, 63, 255, cv2.THRESH_BINARY_INV)
-    contours, hierarchy = cv2.findContours(th2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    _, th2 = cv2.threshold(gray, 63, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    return th2
 
+
+def get_letters_bounding(score_gray):
+    contours, hierarchy = cv2.findContours(score_gray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     contours_poly = [None] * len(contours)
-    boundRect = []
+    bound_rect = []
 
     for i, c in enumerate(contours):
         contours_poly[i] = cv2.approxPolyDP(c, 3, True)
         parent = hierarchy[0][i][3]
         if parent != -1 and hierarchy[0][parent][3] == -1:  # it has parent, but does not have a grandpa
-            boundRect.append(cv2.boundingRect(contours_poly[i]))
+            bound_rect.append(cv2.boundingRect(contours_poly[i]))
 
-    boundRect = sorted(boundRect)
-
-    for i in range(len(boundRect)):
-        color = (0, 50 + i * 20, 0)
-        p1 = (int(boundRect[i][0]), int(boundRect[i][1]))
-        p2 = (int(boundRect[i][0] + boundRect[i][2]), int(boundRect[i][1] + boundRect[i][3]))
-        cv2.rectangle(subimage, p1, p2, color, 1)
-
-    for i in range(1, len(boundRect)): # check if y's are the same
-        if not abs(boundRect[i][1] - boundRect[i-1][1]) < 5 or not abs(boundRect[i][3] - boundRect[i-1][3]) < 5:
+    bound_rect = sorted(bound_rect)
+    for i in range(1, len(bound_rect)):  # check if y's are the same
+        if not abs(bound_rect[i][1] - bound_rect[i - 1][1]) < 5 or not abs(bound_rect[i][3] - bound_rect[i - 1][3]) < 5:
             return None
+    return bound_rect
 
 
-    cv2.imshow('aa', subimage)
-    text = pytesseract.image_to_string(th2)
-    print(text)
-    i = 0
-    for rect in boundRect:
-        # p1 = (int(boundRect[i][0]), int(boundRect[i][1]))
-        # p2 = (int(boundRect[i][0] + boundRect[i][2]), int(boundRect[i][1] + boundRect[i][3]))
-        letterimage = th2[rect[1]:rect[1]+rect[3], rect[0]:rect[0]+rect[2]]
-        cv2.imshow(str(i), letterimage)
+i = 0
+
+
+def get_score_from_frame(frame):
+    score_gray = get_score_area(frame)
+    bound_rect = get_letters_bounding(score_gray)
+    global i
+
+    if bound_rect:
+        cv2.imshow('aa', score_gray)
+
+    for rect in bound_rect:
+        letterimage = score_gray[rect[1]:rect[1] + rect[3], rect[0]:rect[0] + rect[2]]
+        cv2.imwrite("train_data/" + str(i) + ".jpg", letterimage)
         i += 1
-        # letter = pytesseract.image_to_string(letterimage,lang='eng',  config="-c tessedit_char_whitelist=0123456789/ --psm 10 -l osd")
-        letter = pytesseract.image_to_string(letterimage, config="--psm 10 -l osd")
-        print(letter, end="")
-
-    print("")
-    # cv2.imshow("aa", subimage)
-    # todo findcountures i pojedynczo rozpoznowac z opcja single character moze???
-
-    if text.count("/") == 2:
-        kills, deads, assists = text.split("/")
-        if kills.isdigit() and deads.isdigit() and assists.isdigit():
-            return int(kills), int(deads), int(assists)
-    return None
+        # letter = recognizedigit(letterimage)
+        # print(letter, end="")
+    print(i)
+    # cv2.imshow("aa", score_area)
+    # if text.count("/") == 2:
+    #     kills, deads, assists = text.split("/")
+    #     if kills.isdigit() and deads.isdigit() and assists.isdigit():
+    #         return int(kills), int(deads), int(assists)
+    # return None
 
 
-for frame, frame_time in every_n_frame("out.mp4", 10):
-    get_score_from_frame(frame)
-    key = cv2.waitKey(30)
-
-# vidPath = 'out.mp4'
-
-# source = pyglet.media.StreamingSource()
-# MediaLoad = pyglet.media.load(vidPath)
-# # need ffmpeg codec http://blog.gregzaal.com/how-to-install-ffmpeg-on-windows/ and avbin on windows!!
-# player.queue(MediaLoad)
-# player.play()
+for f_name in ["out.mp4", "8.mp4", "56.mp4", "349.mp4"]:
+    for frame, frame_time in every_n_frame(f_name, 60):
+        get_score_from_frame(frame)
+#     key = cv2.waitKey(30)
