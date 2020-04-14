@@ -2,32 +2,6 @@ from moviepy.editor import *
 import cv2
 import pytesseract
 import numpy as np
-import random as rng
-
-rng.seed(12345)
-
-
-# 0, 1, 2, 7 -> out.mp4.
-# 3, 4, 9 -> 42;33
-# 5, 6 -> 2;14;30
-# 8 -> 2;18;30
-
-# video = VideoFileClip("Twitch.mp4")
-# v1 = video.subclip(42 * 60 + 30, 42 * 60 + 35)
-# v1.write_videofile("349.mp4")
-#
-# v1 = video.subclip(2 * 60 * 60 + 14 * 60 + 25, 2 * 60 * 60 + 14 * 60 + 30)
-# v1.write_videofile("56.mp4")
-#
-# v1 = video.subclip(2 * 60 * 60 + 18 * 60 + 25, 2 * 60 * 60 + 18 * 60 + 30)
-# v1.write_videofile("8.mp4")
-
-
-# v1 = video.subclip(745,761)
-# v2 = video.subclip(12352, 12368)
-# result = CompositeVideoClip([video, txt_clip]) # Overlay text on video
-# v2.write_videofile("out.mp4") # Many options...
-# v1.write_videofile("out1.mp4") # Many options...
 
 
 def frames(file, do_print=False):
@@ -57,10 +31,10 @@ def every_n_frame(file, n):
 
 
 def recognizedigit(src):
-    cdst = cv2.cvtColor(src, cv2.COLOR_GRAY2BGR)
-
-    cv2.imshow('linesDetected.jpg', cdst)
-    cv2.waitKey(3000)
+    # cdst = cv2.cvtColor(src, cv2.COLOR_GRAY2BGR)
+    global knn
+    ret, result, neighbours, dist = knn.find_nearest([src], k=5)
+    return result[0]
 
 
 def get_score_area(frame):
@@ -89,9 +63,6 @@ def get_letters_bounding(score_gray):
     return bound_rect
 
 
-i = 0
-
-
 def get_score_from_frame(frame):
     score_gray = get_score_area(frame)
     bound_rect = get_letters_bounding(score_gray)
@@ -102,10 +73,9 @@ def get_score_from_frame(frame):
 
     for rect in bound_rect:
         letterimage = score_gray[rect[1]:rect[1] + rect[3], rect[0]:rect[0] + rect[2]]
-        cv2.imwrite("train_data/" + str(i) + ".jpg", letterimage)
-        i += 1
-        # letter = recognizedigit(letterimage)
-        # print(letter, end="")
+        cv2.imshow("letter", letterimage)
+        letter = recognizedigit(letterimage)
+        print(letter, end="")
     print(i)
     # cv2.imshow("aa", score_area)
     # if text.count("/") == 2:
@@ -114,8 +84,23 @@ def get_score_from_frame(frame):
     #         return int(kills), int(deads), int(assists)
     # return None
 
+labels = []
+train_data = []
+for i in range(10):
+    td = cv2.imread('train_data/{}.jpg'.format(i))
+    train_data.append(np.float32(td))
+    labels.append(i)
+td = cv2.imread('train_data/_.jpg')
+train_data.append(td)
+labels.append(10)
+
+knn = cv2.ml.KNearest_create()
+# traindata = np.array(train_data, dtype=np.float32)
+labels= np.array(labels, dtype=np.float32)
+knn.train(train_data, cv2.ml.ROW_SAMPLE, labels)
+
 
 for f_name in ["out.mp4", "8.mp4", "56.mp4", "349.mp4"]:
     for frame, frame_time in every_n_frame(f_name, 60):
         get_score_from_frame(frame)
-#     key = cv2.waitKey(30)
+        key = cv2.waitKey(1000)
