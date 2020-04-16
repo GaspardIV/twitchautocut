@@ -2,6 +2,7 @@ from moviepy.editor import *
 import cv2
 import pytesseract
 import numpy as np
+import os
 
 
 def frames(file, do_print=False):
@@ -88,6 +89,7 @@ def get_score_from_frame(frame):
 digits = []
 labels = []
 
+
 def get_feature(image):
     # bordered = np.zeros((20, 20), np.float32)
     bordered = np.zeros([20, 20], dtype=np.uint8)
@@ -99,19 +101,48 @@ def get_feature(image):
     # cv2.imshow("xd2", image)
     # cv2.waitKey(1000)
     ret = bordered.astype(np.float32)
-    ret = 255-ret
+    ret = 255 - ret
     return ret.ravel()
 
 
-for i in range(10):
-    image = cv2.imread('train_data/{}.jpg'.format(i))
+# for i in range(10):
+#     image = cv2.imread('train_data/{}.jpg'.format(i))
+#     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#     digits.append(get_feature(image))
+#     labels.append(i)
+# td = cv2.imread('train_data/_.jpg')
+# td = cv2.cvtColor(td, cv2.COLOR_BGR2GRAY)
+# digits.append(get_feature(td))
+# labels.append(10)
+
+
+digits = []
+labels = []
+
+
+def addFileData(file, label):
+    image = cv2.imread(file)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     digits.append(get_feature(image))
-    labels.append(i)
-td = cv2.imread('train_data/_.jpg')
-td = cv2.cvtColor(td, cv2.COLOR_BGR2GRAY)
-digits.append(get_feature(td))
-labels.append(10)
+    labels.append(label)
+
+
+def readFolder(folder_name, label):
+    for file in os.listdir(folder_name):
+        addFileData(folder_name + file, label)
+
+
+readFolder("train_data/0/", 0)
+readFolder("train_data/1/", 1)
+readFolder("train_data/2/", 2)
+readFolder("train_data/3/", 3)
+readFolder("train_data/4/", 4)
+readFolder("train_data/5/", 5)
+readFolder("train_data/6/", 6)
+readFolder("train_data/7/", 7)
+readFolder("train_data/8/", 8)
+readFolder("train_data/9/", 9)
+readFolder("train_data/slash/", 10)
 
 knn = cv2.ml.KNearest_create()
 digits = np.array(digits, np.float32)
@@ -121,4 +152,4 @@ knn.train(digits, cv2.ml.ROW_SAMPLE, labels)
 for f_name in ["out.mp4", "8.mp4", "56.mp4", "349.mp4"]:
     for frame, frame_time in every_n_frame(f_name, 60):
         get_score_from_frame(frame)
-        key = cv2.waitKey(1000)
+        # key = cv2.waitKey(1000)
