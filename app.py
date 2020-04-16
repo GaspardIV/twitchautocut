@@ -74,7 +74,6 @@ def get_score_from_frame(frame):
 
     for rect in bound_rect:
         letterimage = score_gray[rect[1]:rect[1] + rect[3], rect[0]:rect[0] + rect[2]]
-        cv2.imshow("letter", letterimage)
         letter = recognizedigit(letterimage)
         print(letter, end="")
     print("")
@@ -100,6 +99,7 @@ def get_feature(image):
     # cv2.imshow("xd2", image)
     # cv2.waitKey(1000)
     ret = bordered.astype(np.float32)
+    ret = 255-ret
     return ret.ravel()
 
 
