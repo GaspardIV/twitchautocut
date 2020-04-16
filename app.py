@@ -90,10 +90,16 @@ digits = []
 labels = []
 
 def get_feature(image):
-    image = cv2.resize(image, (10, 30), interpolation=cv2.INTER_LINEAR)
-    cv2.imshow("xd", image)
-    cv2.waitKey(1000)
-    ret = image.astype(np.float32)
+    # bordered = np.zeros((20, 20), np.float32)
+    bordered = np.zeros([20, 20], dtype=np.uint8)
+    bordered.fill(255)
+    # image2 = cv2.resize(image, (10, 30), interpolation=cv2.INTER_LINEAR)
+    bordered[0:image.shape[0], 0:image.shape[1]] = image
+    # todo moze zamiast rozciafgania dopelnianie do krztałtu
+    # cv2.imshow("xd", bordered)
+    # cv2.imshow("xd2", image)
+    # cv2.waitKey(1000)
+    ret = bordered.astype(np.float32)
     return ret.ravel()
 
 
@@ -111,9 +117,7 @@ knn = cv2.ml.KNearest_create()
 digits = np.array(digits, np.float32)
 labels = np.array(labels, np.float32)
 knn.train(digits, cv2.ml.ROW_SAMPLE, labels)
-print(digits.shape)
-# ret, result, neighbours, dist = knn.findNearest(digits, k=3)
-# print(result)
+
 for f_name in ["out.mp4", "8.mp4", "56.mp4", "349.mp4"]:
     for frame, frame_time in every_n_frame(f_name, 60):
         get_score_from_frame(frame)
