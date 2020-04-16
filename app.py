@@ -32,8 +32,10 @@ def every_n_frame(file, n):
 
 def recognizedigit(src):
     # cdst = cv2.cvtColor(src, cv2.COLOR_GRAY2BGR)
-    global knn
-    ret, result, neighbours, dist = knn.find_nearest([src], k=5)
+    # global knn
+    arr = [get_feature(src)]
+    arr = np.array(arr, np.float32)
+    ret, result, neighbours, dist = knn.findNearest(arr, k=5)
     return result[0]
 
 
@@ -66,7 +68,6 @@ def get_letters_bounding(score_gray):
 def get_score_from_frame(frame):
     score_gray = get_score_area(frame)
     bound_rect = get_letters_bounding(score_gray)
-    global i
 
     if bound_rect:
         cv2.imshow('aa', score_gray)
@@ -76,7 +77,7 @@ def get_score_from_frame(frame):
         cv2.imshow("letter", letterimage)
         letter = recognizedigit(letterimage)
         print(letter, end="")
-    print(i)
+    print("")
     # cv2.imshow("aa", score_area)
     # if text.count("/") == 2:
     #     kills, deads, assists = text.split("/")
@@ -84,22 +85,35 @@ def get_score_from_frame(frame):
     #         return int(kills), int(deads), int(assists)
     # return None
 
+
+digits = []
 labels = []
-train_data = []
+
+def get_feature(image):
+    image = cv2.resize(image, (10, 30), interpolation=cv2.INTER_LINEAR)
+    cv2.imshow("xd", image)
+    cv2.waitKey(1000)
+    ret = image.astype(np.float32)
+    return ret.ravel()
+
+
 for i in range(10):
-    td = cv2.imread('train_data/{}.jpg'.format(i))
-    train_data.append(np.float32(td))
+    image = cv2.imread('train_data/{}.jpg'.format(i))
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    digits.append(get_feature(image))
     labels.append(i)
 td = cv2.imread('train_data/_.jpg')
-train_data.append(td)
+td = cv2.cvtColor(td, cv2.COLOR_BGR2GRAY)
+digits.append(get_feature(td))
 labels.append(10)
 
 knn = cv2.ml.KNearest_create()
-# traindata = np.array(train_data, dtype=np.float32)
-labels= np.array(labels, dtype=np.float32)
-knn.train(train_data, cv2.ml.ROW_SAMPLE, labels)
-
-
+digits = np.array(digits, np.float32)
+labels = np.array(labels, np.float32)
+knn.train(digits, cv2.ml.ROW_SAMPLE, labels)
+print(digits.shape)
+# ret, result, neighbours, dist = knn.findNearest(digits, k=3)
+# print(result)
 for f_name in ["out.mp4", "8.mp4", "56.mp4", "349.mp4"]:
     for frame, frame_time in every_n_frame(f_name, 60):
         get_score_from_frame(frame)
