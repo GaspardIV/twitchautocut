@@ -127,18 +127,27 @@ def recognizeScore(letters, knn):
     return None
 
 
-
+video = VideoFileClip("out.mp4")
+# print(video.duration)
+# exit(0)
 if __name__ == '__main__':
     knn = train()
     # for f_name in ["out.mp4", "8.mp4", "56.mp4", "349.mp4"]:
-    for f_name in ["56.mp4"]:
+    for f_name in ["out.mp4"]:
+        prev_kda = None
         for frame, frame_time in every_n_frame(f_name, 5):
             letters = get_letters(frame)
             if letters:
-                kills, deaths, assists = recognizeScore(letters, knn)
-                print(kills, deaths, assists)
-
-                cv2.imshow("xd", frame)
-                cv2.waitKey(30)
-
-# todo 5 od 6 nie odroznia
+                # kills, deaths, assists = recognizeScore(letters, knn)
+                kda = recognizeScore(letters, knn)
+                if kda != prev_kda:
+                    print(prev_kda, kda, frame_time)
+                    start = max(int(frame_time) - 5, 0)
+                    end = min(int(frame_time) + 2, int(video.duration))
+                    v1 = video.subclip(start, end)
+                    v1.write_videofile("out/{}__{}-{}__{}-{}.mp4".format(f_name, start, end, prev_kda, kda))
+                    v1.close()
+                    prev_kda = kda
+                    cv2.imshow("xd", frame)
+                    cv2.waitKey(30)
+    exit(0)
