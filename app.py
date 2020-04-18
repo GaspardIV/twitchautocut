@@ -1,15 +1,17 @@
-from moviepy.editor import *
+# from moviepy.editor import *
 import cv2
 import pytesseract
 import numpy as np
 import os
+
+from moviepy.editor import VideoFileClip
 
 
 def frames(file, do_print=False):
     capture = cv2.VideoCapture(file)
     frame_num = 0
     total = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps = round(capture.get(cv2.CAP_PROP_FPS))
+    fps = capture.get(cv2.CAP_PROP_FPS)
     while True:
         ret, frame = capture.read()
         if frame is not None:
@@ -128,6 +130,7 @@ def recognizeScore(letters, knn):
 
 
 video = VideoFileClip("out.mp4")
+
 # print(video.duration)
 # exit(0)
 if __name__ == '__main__':
@@ -145,8 +148,12 @@ if __name__ == '__main__':
                     start = max(int(frame_time) - 5, 0)
                     end = min(int(frame_time) + 2, int(video.duration))
                     v1 = video.subclip(start, end)
-                    v1.write_videofile("out/{}__{}-{}__{}-{}.mp4".format(f_name, start, end, prev_kda, kda))
-                    v1.close()
+                    out_name = "out/{}__{}-{}__{}-{}.mp4".format(f_name, start, end, prev_kda, kda)
+                    # v1.write_videofile(out_name)
+                    v1.to_videofile(out_name, codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True,
+                                      audio_codec='aac')
+
+                    # v1.close()
                     prev_kda = kda
                     cv2.imshow("xd", frame)
                     cv2.waitKey(30)
