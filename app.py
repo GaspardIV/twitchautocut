@@ -129,14 +129,15 @@ def recognizeScore(letters, knn):
     return None
 
 
-video = VideoFileClip("out.mp4")
+video = VideoFileClip("Twitch.mp4")
 
 # print(video.duration)
 # exit(0)
+
 if __name__ == '__main__':
     knn = train()
     # for f_name in ["out.mp4", "8.mp4", "56.mp4", "349.mp4"]:
-    for f_name in ["out.mp4"]:
+    for f_name in ["Twitch.mp4"]:
         prev_kda = None
         for frame, frame_time in every_n_frame(f_name, 5):
             letters = get_letters(frame)
@@ -152,9 +153,12 @@ if __name__ == '__main__':
                     # v1.write_videofile(out_name)
                     v1.to_videofile(out_name, codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True,
                                       audio_codec='aac')
-
-                    # v1.close()
                     prev_kda = kda
-                    cv2.imshow("xd", frame)
-                    cv2.waitKey(30)
+                    # v1.close()
+                    # cv2.imshow("xd", frame)
+                    # cv2.waitKey(30)
     exit(0)
+
+# TODO rozbic to na klasy:
+# 1) same interesujace momenty -> jak sa blisko siebie np tam do 10 skeund to polaczyc akcje -> kill dead assist
+# 2)
