@@ -3,8 +3,12 @@ import cv2
 import pytesseract
 import numpy as np
 import os
+from datetime import datetime
 
 from moviepy.editor import VideoFileClip
+
+TRAINING_LABELS = True
+VIDEO_PROCESSING = False
 
 
 def frames(file, do_print=False):
@@ -34,9 +38,17 @@ def every_n_frame(file, n):
 
 
 def recognizedigit(src, knn):
-    arr = [get_feature(src)]
-    arr = np.array(arr, np.float32)
-    ret, result, neighbours, dist = knn.findNearest(arr, k=5)
+    try:
+        arr = [get_feature(src)]
+        arr = np.array(arr, np.float32)
+        ret, result, neighbours, dist = knn.findNearest(arr, k=5)
+    except:
+        result = [-1] #ERROR
+    if TRAINING_LABELS:
+        filename = './more_labels/{}/{}.jpg'.format(int(result[0]), datetime.now().timestamp())
+        print("writing label:", filename)
+        cv2.imwrite(filename, src)
+        cv2.waitKey(30)
     return labeltodigit(result[0])
 
 
@@ -118,14 +130,19 @@ def train():
 
 
 def labeltodigit(label):
-    return {0: "0", 1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8", 9: "9", 10: "/"}[label[0]]
+    return {0: "0", 1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8", 9: "9", 10: "/", -1: "ERR"}[label[0]]
 
 
 def recognizeScore(letters, knn):
+    # score = ''.join([recognizedigit(letter, knn) for letter in letters])
     score = ''.join([recognizedigit(letter, knn) for letter in letters])
-    if score.count("/") == 2:
-        kills, deads, assists = score.split("/")
-        return int(kills), int(deads), int(assists)
+
+    try:
+        if score.count("/") == 2:
+            kills, deads, assists = score.split("/")
+            return int(kills), int(deads), int(assists)
+    except:
+        return None
     return None
 
 
@@ -139,12 +156,12 @@ if __name__ == '__main__':
     # for f_name in ["out.mp4", "8.mp4", "56.mp4", "349.mp4"]:
     for f_name in ["Twitch.mp4"]:
         prev_kda = None
-        for frame, frame_time in every_n_frame(f_name, 5):
+        for frame, frame_time in every_n_frame(f_name, 15):
             letters = get_letters(frame)
             if letters:
                 # kills, deaths, assists = recognizeScore(letters, knn)
                 kda = recognizeScore(letters, knn)
-                if kda != prev_kda:
+                if kda != prev_kda and VIDEO_PROCESSING:
                     print(prev_kda, kda, frame_time)
                     start = max(int(frame_time) - 5, 0)
                     end = min(int(frame_time) + 2, int(video.duration))
@@ -152,8 +169,9 @@ if __name__ == '__main__':
                     out_name = "out/{}__{}-{}__{}-{}.mp4".format(f_name, start, end, prev_kda, kda)
                     # v1.write_videofile(out_name)
                     v1.to_videofile(out_name, codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True,
-                                      audio_codec='aac')
+                                    audio_codec='aac')
                     prev_kda = kda
+
                     # v1.close()
                     # cv2.imshow("xd", frame)
                     # cv2.waitKey(30)
