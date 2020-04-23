@@ -118,12 +118,19 @@ class KDAMomentsExtractor:
             contours_poly[i] = cv2.approxPolyDP(c, 3, True)
             parent = hierarchy[0][i][3]
             if parent != -1 and hierarchy[0][parent][3] == -1:  # it has parent, but does not have a grandpa
-                bound_rect.append(cv2.boundingRect(contours_poly[i]))
+                rect = cv2.boundingRect(contours_poly[i])
+                width = rect[2]
+                height = rect[3]
+                if height > 5 and width > 2:
+                    bound_rect.append(rect)
         bound_rect = sorted(bound_rect)
         return bound_rect
 
     @staticmethod
-    def boundings_fine(bound_rect):
+    def areBoundingsFine(bound_rect):
+        if len(bound_rect) < 5:
+            return False
+
         for i in range(1, len(bound_rect)):  # check if y's are the same
             if not abs(bound_rect[i][1] - bound_rect[i - 1][1]) < 5 or not abs(
                     bound_rect[i][3] - bound_rect[i - 1][3]) < 5:
@@ -134,7 +141,7 @@ class KDAMomentsExtractor:
         letters = []
         score_gray = self.get_score_area(frame)
         bound_rect = self.get_letters_bounding(score_gray)
-        if self.boundings_fine(bound_rect):
+        if self.areBoundingsFine(bound_rect):
             for rect in bound_rect:
                 letterimage = score_gray[rect[1]:rect[1] + rect[3], rect[0]:rect[0] + rect[2]]
                 letters.append(letterimage)
