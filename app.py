@@ -1,6 +1,4 @@
-# from moviepy.editor import *
 import cv2
-import pytesseract
 import numpy as np
 import os
 from datetime import datetime
@@ -82,8 +80,8 @@ class KDAMomentsExtractor:
                 frame_num += 1
                 time_in_sec = frame_num / fps
                 if do_print:
-                    if frame_num > total / 100 * percent:
-                        print("{}% done".format(percent))
+                    if frame_num >= total / 100 * percent:
+                        print("[{}] {}% done".format(datetime.now(), percent))
                         percent += 1
                 yield frame, time_in_sec
             else:
@@ -209,17 +207,3 @@ if __name__ == '__main__':
     #
     # kdaMomentsExtractor.searchForMoreSamples()
     exit(0)
-
-# todo 0 z 8 sie myli teraz@@@
-
-
-# TODO rozbic to na klasy:
-#   1) same interesujace momenty -> jak sa blisko siebie np tam do 10 skeund to polaczyc akcje -> kill dead assist
-#   2)
-
-# TODO LITEREK MUSI BYC PRZYNAJMNIEJ 5 + TODO CO NAJMNIEJ JAKIEJS WIELKOSCI
-
-# TODO dla -1 zly unpacking
-#   File "C:/Users/na przyklad tomek/PycharmProjects/twitchautocut/app.py", line 133, in labeltodigit
-#     return {0: "0", 1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8", 9: "9", 10: "/", -1: "ERR"}[label[0]]
-#   TypeError: 'int' object is not subscriptable
