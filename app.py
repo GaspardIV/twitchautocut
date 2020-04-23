@@ -9,19 +9,26 @@ from moviepy.editor import VideoFileClip
 
 
 # video = VideoFileClip("Twitch.mp4")
+# v1 = video.subclip(1145, 1155)
 # v1 = video.subclip(start, end)
 # out_name = "out/{}__{}-{}__{}-{}.mp4".format(f_name, start, end, prev_kda, kda)
 # # v1.write_videofile(out_name)
-# v1.to_videofile(out_name, codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True,
+# v1.to_videofile("test08.mp4", codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True,
 #                 audio_codec='aac')
 
 class KDAMomentsExtractor:
     EVERY_NTH_FRAME = 20
+    MODEL_PATH = "./models/digit_model_1587679271.840106.xml"
 
     def __init__(self, vid_path) -> None:
         self.vid_path = vid_path
-        self.knn = cv2.ml.KNearest_create()
-        self.train()
+        if self.MODEL_PATH is not None:
+            self.svm = cv2.ml.SVM_load(self.MODEL_PATH)
+        else:
+            self.svm = cv2.ml.SVM_create()
+            self.svm.setType(cv2.ml.SVM_C_SVC)
+            self.svm.setKernel(cv2.ml.SVM_LINEAR)
+            self.train()
 
     def train(self):
         digits = []
@@ -31,8 +38,9 @@ class KDAMomentsExtractor:
             digits.extend(dirdigits)
             labels.extend([i] * len(dirdigits))
         digits = np.array(digits, np.float32)
-        labels = np.array(labels, np.float32)
-        self.knn.train(digits, cv2.ml.ROW_SAMPLE, labels)
+        labels = np.array(labels, np.int)
+        self.svm.train(digits, cv2.ml.ROW_SAMPLE, labels)
+        self.svm.save("models/digit_model_{}.xml".format(datetime.now().timestamp()))
 
     def searchForMoreSamples(self):
         for frame, frame_time in self.every_n_frame(self.vid_path, self.EVERY_NTH_FRAME):
@@ -77,7 +85,6 @@ class KDAMomentsExtractor:
                     if frame_num > total / 100 * percent:
                         print("{}% done".format(percent))
                         percent += 1
-                        # print('{num}/{totalnum}'.format(num=frame_num, totalnum=total))
                 yield frame, time_in_sec
             else:
                 break
@@ -94,7 +101,7 @@ class KDAMomentsExtractor:
         try:
             arr = [self.get_feature(src)]
             arr = np.array(arr, np.float32)
-            ret, result, neighbours, dist = self.knn.findNearest(arr, k=5)
+            result = self.svm.predict(arr)[1]
         except:
             result = [[-1]]  # ERROR
         return self.digitToLabel(result[0][0])
@@ -195,13 +202,16 @@ class KDAMomentsExtractor:
 
 
 if __name__ == '__main__':
-    kdaMomentsExtractor = KDAMomentsExtractor("Twitch.mp4")
+    kdaMomentsExtractor = KDAMomentsExtractor("out.mp4")
     res = kdaMomentsExtractor.searchForKDAMoments()
-    with open("nocny_output.txt", 'w') as file:
+    with open("nocny_output2.txt", 'w') as file:
         file.write(str(res))
-
+    #
     # kdaMomentsExtractor.searchForMoreSamples()
     exit(0)
+
+# todo 0 z 8 sie myli teraz@@@
+
 
 # TODO rozbic to na klasy:
 #   1) same interesujace momenty -> jak sa blisko siebie np tam do 10 skeund to polaczyc akcje -> kill dead assist
