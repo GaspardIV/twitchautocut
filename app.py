@@ -7,9 +7,8 @@ from datetime import datetime
 
 from moviepy.editor import VideoFileClip
 
-video = VideoFileClip("Twitch.mp4")
 
-
+# video = VideoFileClip("Twitch.mp4")
 # v1 = video.subclip(start, end)
 # out_name = "out/{}__{}-{}__{}-{}.mp4".format(f_name, start, end, prev_kda, kda)
 # # v1.write_videofile(out_name)
@@ -17,7 +16,7 @@ video = VideoFileClip("Twitch.mp4")
 #                 audio_codec='aac')
 
 class KDAMomentsExtractor:
-    EVERY_NTH_FRAME = 15
+    EVERY_NTH_FRAME = 20
 
     def __init__(self, vid_path) -> None:
         self.vid_path = vid_path
@@ -196,8 +195,11 @@ class KDAMomentsExtractor:
 
 
 if __name__ == '__main__':
-    kdaMomentsExtractor = KDAMomentsExtractor("out.mp4")
-    print(kdaMomentsExtractor.searchForKDAMoments())
+    kdaMomentsExtractor = KDAMomentsExtractor("Twitch.mp4")
+    res = kdaMomentsExtractor.searchForKDAMoments()
+    with open("nocny_output.txt", 'w') as file:
+        file.write(str(res))
+
     # kdaMomentsExtractor.searchForMoreSamples()
     exit(0)
 
