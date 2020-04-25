@@ -5,18 +5,20 @@ from datetime import datetime
 
 from moviepy.editor import VideoFileClip
 
-
 # video = VideoFileClip("Twitch.mp4")
-# v1 = video.subclip(1145, 1155)
+# v1 = video.subclip(6336, 7000)
 # v1 = video.subclip(start, end)
 # out_name = "out/{}__{}-{}__{}-{}.mp4".format(f_name, start, end, prev_kda, kda)
-# # v1.write_videofile(out_name)
-# v1.to_videofile("test08.mp4", codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True,
+# v1.write_videofile(out_name)
+# v1.to_videofile("test5614.mp4", codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True,
 #                 audio_codec='aac')
+
 
 class KDAMomentsExtractor:
     EVERY_NTH_FRAME = 20
-    MODEL_PATH = "./models/digit_model_1587679271.840106.xml"
+    MODEL_PATH = None
+
+    # MODEL_PATH = "./models/digit_model_1587679271.840106.xml"
 
     def __init__(self, vid_path) -> None:
         self.vid_path = vid_path
@@ -26,6 +28,7 @@ class KDAMomentsExtractor:
             self.svm = cv2.ml.SVM_create()
             self.svm.setType(cv2.ml.SVM_C_SVC)
             self.svm.setKernel(cv2.ml.SVM_LINEAR)
+            # self.svm.
             self.train()
 
     def train(self):
@@ -37,7 +40,7 @@ class KDAMomentsExtractor:
             labels.extend([i] * len(dirdigits))
         digits = np.array(digits, np.float32)
         labels = np.array(labels, np.int)
-        self.svm.train(digits, cv2.ml.ROW_SAMPLE, labels)
+        self.svm.trainAuto(digits, cv2.ml.ROW_SAMPLE, labels)
         self.svm.save("models/digit_model_{}.xml".format(datetime.now().timestamp()))
 
     def searchForMoreSamples(self):
@@ -200,10 +203,18 @@ class KDAMomentsExtractor:
 
 
 if __name__ == '__main__':
-    kdaMomentsExtractor = KDAMomentsExtractor("out.mp4")
+    kdaMomentsExtractor = KDAMomentsExtractor("591019733.mp4")
     res = kdaMomentsExtractor.searchForKDAMoments()
-    with open("nocny_output2.txt", 'w') as file:
+    with open("nocny_output5.txt", 'w') as file:
         file.write(str(res))
     #
     # kdaMomentsExtractor.searchForMoreSamples()
     exit(0)
+
+#     TODO WIECEJ SAMPLI 9 !!!!!!!!!!!!!!!!! BO MYLI SIE Z 0 CZASAMI
+#  tyodo wiecej sampli 5 i 6
+# 1 z 4 czasem myli sie
+# todo pobawic sie uczeniem, moze autoparametry jakies
+# 3z 5 chyba pomylilo????????
+# todo inny filmik pobrac :0
+# jask jest jkis wynik pozniej inny pozniej znowu tamten to ten po srodku moze sie nie lcizyc

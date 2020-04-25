@@ -18,3 +18,4 @@ opencv-python==4.2.0.34
 Pillow==6.2.1
 pytesseract==0.3.3
 moviepy==1.0.0
+twitch-dl==1.6.0
