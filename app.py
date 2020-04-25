@@ -1,9 +1,11 @@
 import cv2
 import numpy as np
 import os
+import json
 from datetime import datetime
 
 from moviepy.editor import VideoFileClip
+
 
 # video = VideoFileClip("Twitch.mp4")
 # v1 = video.subclip(6336, 7000)
@@ -88,6 +90,7 @@ class KDAMomentsExtractor:
                         percent += 1
                 yield frame, time_in_sec
             else:
+                print("[{}] FINISHED".format(datetime.now()))
                 break
 
     def every_n_frame(self, file, n):
@@ -203,18 +206,21 @@ class KDAMomentsExtractor:
 
 
 if __name__ == '__main__':
-    kdaMomentsExtractor = KDAMomentsExtractor("591019733.mp4")
+    v_id = "591019733"
+    kdaMomentsExtractor = KDAMomentsExtractor(v_id + ".mp4")
     res = kdaMomentsExtractor.searchForKDAMoments()
-    with open("nocny_output5.txt", 'w') as file:
-        file.write(str(res))
-    #
+    with open("{}_kda.txt".format(v_id), 'w') as file:
+        json.dump(res, file)
+
     # kdaMomentsExtractor.searchForMoreSamples()
+
     exit(0)
 
 #     TODO WIECEJ SAMPLI 9 !!!!!!!!!!!!!!!!! BO MYLI SIE Z 0 CZASAMI
-#  tyodo wiecej sampli 5 i 6
-# 1 z 4 czasem myli sie
-# todo pobawic sie uczeniem, moze autoparametry jakies
-# 3z 5 chyba pomylilo????????
+# todo jak sample z każdego kilka zbierać, ale bez '/' może
 # todo inny filmik pobrac :0
 # jask jest jkis wynik pozniej inny pozniej znowu tamten to ten po srodku moze sie nie lcizyc
+# https://github.com/EnterGin/Twitch-VOD-Downloader/blob/master/Twitch_VOD_Downloader.py
+# to wyglada prosto
+# https://github.com/0xf77/twitch-dl
+# todo

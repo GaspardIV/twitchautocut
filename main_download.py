@@ -1,5 +1,5 @@
 import json
-from rechatdl import download_messages_from_twitch, download_vid_info
+from twitchdl.rechatdl import download_messages_from_twitch, download_vid_info
 from twitchdl import commands
 
 
@@ -16,7 +16,8 @@ def download_info_and_messages_to_files(vid_id):
 
 
 if __name__ == '__main__':
+    # commands.download_video("591019733", max_workers=10, format="mp4")
+    download_info_and_messages_to_files("591019733")
     # download_info_and_messages_to_files()
-    commands.download("https://www.twitch.tv/videos/591019733", max_workers = 3)
     # 1920x1080
     pass
