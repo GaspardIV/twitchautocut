@@ -4,17 +4,6 @@ import os
 import json
 from datetime import datetime
 
-from moviepy.editor import VideoFileClip
-
-
-# video = VideoFileClip("Twitch.mp4")
-# v1 = video.subclip(6336, 7000)
-# v1 = video.subclip(start, end)
-# out_name = "out/{}__{}-{}__{}-{}.mp4".format(f_name, start, end, prev_kda, kda)
-# v1.write_videofile(out_name)
-# v1.to_videofile("test5614.mp4", codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True,
-#                 audio_codec='aac')
-
 
 class KDAMomentsExtractor:
     EVERY_NTH_FRAME = 20
