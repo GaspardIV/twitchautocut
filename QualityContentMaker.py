@@ -19,7 +19,7 @@ class QualityContentMaker:
         self.video_info = self.readVideoInfo()
         self.messages = self.readMessages()
         self.stream_start = self.parseTime(self.video_info['created_at'])
-        self.stream_duration = int(self.video_info['length'])
+        self.stream_duration = int(self.video_info['length']) + 1
         self.timeToMessages = self.generateTimeToMessagesDict()
         self.timeToXDCount = self.getTimeToCount("xd")
         self.timeToPogCount = self.getTimeToCount("pogchamp")
@@ -28,7 +28,6 @@ class QualityContentMaker:
         print(self.kdaList)
         print(self.timeToXDCount)
         print(self.timeToPogCount)
-        
 
     def readVideoInfo(self):
         file_name = "{}__vid_info.txt".format(self.vid_id)
@@ -46,11 +45,12 @@ class QualityContentMaker:
         for message in self.messages:
             m_bodies.append(message["message"]["body"])
             m_created.append(self.parseTime(message["created_at"]))
-        second_to_messages = {new_list: [] for new_list in range(self.stream_duration + 2)}
-
+        second_to_messages = {new_list: [] for new_list in range(self.stream_duration)}
+        print(self.stream_duration)
         for i in range(len(m_created)):
             time = int((m_created[i] - self.stream_start).total_seconds())
-            second_to_messages[time].append(m_bodies[i])
+            if time < self.stream_duration:
+                second_to_messages[time].append(m_bodies[i])
         return second_to_messages
 
     @staticmethod
