@@ -1,16 +1,7 @@
 import json
 import datetime
-
+import os, sys
 from moviepy.editor import VideoFileClip
-
-
-# video = VideoFileClip("Twitch.mp4")
-# v1 = video.subclip(6336, 7000)
-# v1 = video.subclip(start, end)
-# out_name = "out/{}__{}-{}__{}-{}.mp4".format(f_name, start, end, prev_kda, kda)
-# v1.write_videofile(out_name)
-# v1.to_videofile("test5614.mp4", codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True,
-#                 audio_codec='aac')
 
 
 class InterestingMoment:
@@ -42,7 +33,8 @@ class KDAInterestingMoment(InterestingMoment):
         return other.start < self.start < other.end or self.start < other.start < self.end
 
     def __str__(self) -> str:
-        return "KDAInterestingMoment: |" + str(self.start) + " -> " + str(self.end) + "| points: " + str(self.xdPogCount) + " scoreslen: " + str(len(self.scores))
+        return "KDAInterestingMoment: |" + str(self.start) + " -> " + str(self.end) + "| points: " + str(
+            self.xdPogCount) + " scoreslen: " + str(len(self.scores))
 
 
 class QualityContentMaker:
@@ -58,20 +50,34 @@ class QualityContentMaker:
         self.timeToPogCount = self.getTimeToCount("pogchamp")
         self.kdaList = self.getKdaList()
         self.kdaMoments = self.getMergedKdaMoments(self.kdaList)
+        self.video = None
         self.timeToXDPogCount = {x: self.timeToXDCount[x] + self.timeToPogCount[x] for x in self.timeToPogCount}
+
         # todo top 5 momentow pogchamp oddalonych od siebie o przynajmniej tam minute i wuciac 30 sec (15, 15)
         # top 30 xd sorted ascending (or shuffled -> to test which has better views)(or one good one worse from the middle so thee best one is on the begginig)
         # top 30 pogchamp sorted ascending (or shuffled -> to test which has better views)
         # top 30 pogchamp + xd sorted scending (or shuffled -> to test which has better views)
         # top 50 kills sorted sorted ascending (or shuffled -> to test which has better views)
         # checkc for multikill?
+
         self.countXDPOGForKdaMoments()
         print(self.kdaList)
         print(self.timeToXDCount)
         print(self.timeToPogCount)
-        for m in self.kdaMoments:
-            print(m)
-        # self.getKDAMoments()
+        self.TOPGeneralKdaMoments = sorted(self.kdaMoments, key=lambda moment: moment.xdPogCount, reverse=True)
+        self.TOPxdKdaMoments = sorted(self.kdaMoments, key=lambda moment: moment.xdCount, reverse=True)
+        self.TOPpogKdaMoments = sorted(self.kdaMoments, key=lambda moment: moment.xdCount, reverse=True)
+
+        # TODO; ADD top xd moments
+
+        # for x in self.TOPpogKdaMoments:
+        #     print(x)
+        # print("=========")
+        # for x in self.TOPxdKdaMoments:
+        #     print(x)
+        # print("=========")
+        # for x in self.TOPGeneralKdaMoments:
+        #     print(x)
 
     def readVideoInfo(self):
         file_name = "{}__vid_info.txt".format(self.vid_id)
@@ -130,12 +136,32 @@ class QualityContentMaker:
 
     def countXDPOGForKdaMoments(self):
         for moment in self.kdaMoments:
-            for i in range(int(moment.start), int(moment.end+1)):
+            for i in range(int(moment.start), int(moment.end + 1)):
                 if 0 <= i < self.stream_duration:
                     moment.pogCount += self.timeToPogCount[i]
                     moment.xdCount += self.timeToXDPogCount[i]
                     moment.xdPogCount += self.timeToXDPogCount[i]
 
+    def writeOutputToDIR(self, vid_id):
+        self.video = VideoFileClip(vid_id+".mp4")
+        dir_name = "out_" + vid_id
+        self.mkDir(dir_name)
+        self.writeMomentsList(self.TOPGeneralKdaMoments[:50], dir_name+"/Top50GenKdaMOM")
+        self.writeMomentsList(self.TOPxdKdaMoments[:50], dir_name+"/Top50XdKdaMOM")
+        self.writeMomentsList(self.TOPpogKdaMoments[:50], dir_name+"/Top50PogKdaMOM")
+
+    def writeMomentsList(self, list, dir):
+        for i, m in enumerate(list):
+            v1 = self.video.subclip(m.start, m.end)
+            out_name = dir+"/vid_top{}_t{}-{}.mp4".format(i+1, m.start, m.end)
+            # v1.write_videofile(out_name)
+            v1.to_videofile(out_name, codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True, audio_codec='aac')
+
+    def mkDir(self, dir):
+        try:
+            os.mkdir(dir)
+        except:
+            pass
 
 
 if __name__ == '__main__':
@@ -143,6 +169,7 @@ if __name__ == '__main__':
     vid_id = "591019733"
     maker = QualityContentMaker(vid_id)
 
+    maker.writeOutputToDIR(vid_id)
     exit()
     # download_info_and_messages_to_files(vid_id)
     # start, second_to_messages = preprocess(vid_id + '__messages.txt')
