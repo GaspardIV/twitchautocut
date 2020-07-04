@@ -12,6 +12,39 @@ from moviepy.editor import VideoFileClip
 # v1.to_videofile("test5614.mp4", codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True,
 #                 audio_codec='aac')
 
+
+class InterestingMoment:
+    def __init__(self, start, end) -> None:
+        super().__init__()
+        self.start = start
+        self.end = end
+        # self.from
+
+
+class KDAInterestingMoment(InterestingMoment):
+    def __init__(self, start, end, scores) -> None:
+        super().__init__(start, end)
+        self.xdPogCount = 0
+        self.scores = []
+        self.xdCount = 0
+        self.pogCount = 0
+        self.scores = scores
+
+    def tryToMergeWith(self, other):
+        if not other.scores[0] in self.scores and self.isOverlaping(other):
+            self.scores.extend(other.scores)
+            self.start = min(self.start, other.start)
+            self.end = max(self.end, other.end)
+            return True
+        return False
+
+    def isOverlaping(self, other):
+        return other.start < self.start < other.end or self.start < other.start < self.end
+
+    def __str__(self) -> str:
+        return "KDAInterestingMoment: |" + str(self.start) + " -> " + str(self.end) + "| points: " + str(self.xdPogCount) + " scoreslen: " + str(len(self.scores))
+
+
 class QualityContentMaker:
     def __init__(self, vid_id) -> None:
         super().__init__()
@@ -24,10 +57,21 @@ class QualityContentMaker:
         self.timeToXDCount = self.getTimeToCount("xd")
         self.timeToPogCount = self.getTimeToCount("pogchamp")
         self.kdaList = self.getKdaList()
-
+        self.kdaMoments = self.getMergedKdaMoments(self.kdaList)
+        self.timeToXDPogCount = {x: self.timeToXDCount[x] + self.timeToPogCount[x] for x in self.timeToPogCount}
+        # todo top 5 momentow pogchamp oddalonych od siebie o przynajmniej tam minute i wuciac 30 sec (15, 15)
+        # top 30 xd sorted ascending (or shuffled -> to test which has better views)(or one good one worse from the middle so thee best one is on the begginig)
+        # top 30 pogchamp sorted ascending (or shuffled -> to test which has better views)
+        # top 30 pogchamp + xd sorted scending (or shuffled -> to test which has better views)
+        # top 50 kills sorted sorted ascending (or shuffled -> to test which has better views)
+        # checkc for multikill?
+        self.countXDPOGForKdaMoments()
         print(self.kdaList)
         print(self.timeToXDCount)
         print(self.timeToPogCount)
+        for m in self.kdaMoments:
+            print(m)
+        # self.getKDAMoments()
 
     def readVideoInfo(self):
         file_name = "{}__vid_info.txt".format(self.vid_id)
@@ -70,11 +114,36 @@ class QualityContentMaker:
         with open(file_name) as json_file:
             return json.load(json_file)
 
+    def getMergedKdaMoments(self, kdaList):
+        res = []
+        for i, el in enumerate(kdaList):
+            moment = KDAInterestingMoment(el[0] - 13, el[0] + 13, [el[2]])
+            merged = False
+            for res_moment in res:
+                if res_moment.isOverlaping(moment):
+                    if res_moment.tryToMergeWith(moment):
+                        print("merged", res_moment, moment)
+                        merged = True
+            if not merged:
+                res.append(moment)
+        return res
+
+    def countXDPOGForKdaMoments(self):
+        for moment in self.kdaMoments:
+            for i in range(int(moment.start), int(moment.end+1)):
+                if 0 <= i < self.stream_duration:
+                    moment.pogCount += self.timeToPogCount[i]
+                    moment.xdCount += self.timeToXDPogCount[i]
+                    moment.xdPogCount += self.timeToXDPogCount[i]
+
+
 
 if __name__ == '__main__':
     # 506496104
     vid_id = "591019733"
     maker = QualityContentMaker(vid_id)
+
+    exit()
     # download_info_and_messages_to_files(vid_id)
     # start, second_to_messages = preprocess(vid_id + '__messages.txt')
     # second_to_xdcount = convert_to_count(second_to_messages, "xd")
